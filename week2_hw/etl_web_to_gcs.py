@@ -18,8 +18,8 @@ def clean(df=pd.DataFrame) -> pd.DataFrame:
 	"""
 		Fix datatype issues
 	"""
-	df["tpep_pickup_datetime"] = pd.to_datetime(df["tpep_pickup_datetime"])
-	df["tpep_dropoff_datetime"] = pd.to_datetime(df["tpep_dropoff_datetime"])
+	df["lpep_pickup_datetime"] = pd.to_datetime(df["lpep_pickup_datetime"])
+	df["lpep_dropoff_datetime"] = pd.to_datetime(df["lpep_dropoff_datetime"])
 	print(df.head(2))
 	print(f"columns: {df.dtypes}")
 	print(f"rows: {len(df)}")
@@ -56,15 +56,11 @@ def write_gh(path: Path()) -> None:
 	return 	
 
 
-@flow()
-def etl_web_to_gcs() -> None:
+@flow(log_prints=True)
+def etl_web_to_gcs(year: int, month: int, color: str) -> None:
 	"""
 		Main ETL function
 	"""
-
-	color = "green"
-	year = 2020
-	month = 11
 	dataset_file = f"{color}_tripdata_{year}-{month:02}"
 	dataset_url = f"https://github.com/DataTalksClub/nyc-tlc-data/releases/download/{color}/{dataset_file}.csv.gz"
 
@@ -74,6 +70,14 @@ def etl_web_to_gcs() -> None:
 	#write_gcs(path) 
 	write_gh(path)
 
+	print(f"Log: Sent to gh")
+
+
+@flow(log_prints=True)
+def etl_github_flow(months: list[int] = [1,2], year: int = 2019, color: str = "yellow"):
+	for month in months:
+		etl_web_to_gcs(year, month, color)
+	print("Finished with job")
 
 
 if __name__ == "__main__": 
