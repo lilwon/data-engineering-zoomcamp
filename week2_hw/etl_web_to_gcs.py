@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 from prefect import flow, task
 from prefect_gcp.cloud_storage import GcsBucket
-
+from prefect.filesystems import GitHub
 
 @task(retries=3)
 def fetch(dataset_url: str) -> pd.DataFrame:
@@ -46,22 +46,33 @@ def write_gcs(path: Path()) -> None:
 	return
 
 
+@task()
+def write_gh(path: Path()) -> None:
+	"""
+		Write to Github instead?
+	"""
+	github_block = GitHub.load("github-zoomcamp")
+	github_block.upload_from_path(from_path=f"{path}", to_path=path)
+	return 	
+
+
 @flow()
 def etl_web_to_gcs() -> None:
 	"""
 		Main ETL function
 	"""
 
-	color = "yellow"
-	year = 2019 
-	month = 2
+	color = "green"
+	year = 2020
+	month = 11
 	dataset_file = f"{color}_tripdata_{year}-{month:02}"
 	dataset_url = f"https://github.com/DataTalksClub/nyc-tlc-data/releases/download/{color}/{dataset_file}.csv.gz"
 
 	df = fetch(dataset_url) 
 	df_clean = clean(df)
 	path = write_local(df_clean, color, dataset_file)
-	write_gcs(path) 
+	#write_gcs(path) 
+	write_gh(path)
 
 
 
